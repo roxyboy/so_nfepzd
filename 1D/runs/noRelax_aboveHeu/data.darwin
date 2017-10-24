@@ -1,0 +1,25 @@
+ &DARWIN_FORCING
+# darwin_ironFile='loc1_FeFlux_monsurf.bin',
+ darwin_PARFile='/rigel/ocp/users/tu2140/MITgcm/Southern-Ocean/1D/input/fe_relax/SANT_PAR_seawifs_monsurf.bin',
+# darwin_ironFile='/rigel/ocp/users/tu2140/MITgcm/1D_Southern-Ocean/input/fe_polyfit/SANT_mah05_kgm2s.bin',
+# darwin_ironUnits='kg dust/m2/s',
+# 2592000:  seconds in 30 days
+# 864000:   seconds in 10 days
+# 31104000: seconds in 360 days
+# Forcing steps are 12: 31104000/2592000
+ darwin_ForcingPeriod=2592000.,
+ darwin_ForcingCycle=31104000.,
+ darwin_relaxscale=2592000.,
+ darwin_NO3_relaxFile='/rigel/ocp/users/tu2140/MITgcm/Southern-Ocean/1D/input/fe_relax/SANT_nitr_woa_relax.bin',
+ darwin_PO4_relaxFile='/rigel/ocp/users/tu2140/MITgcm/Southern-Ocean/1D/input/fe_relax/SANT_phos_woa_relax.bin',
+ darwin_Si_relaxFile='/rigel/ocp/users/tu2140/MITgcm/Southern-Ocean/1D/input/fe_relax/SANT_sil_woa_relax.bin',
+ darwin_fetrelaxscale=864000. 
+ darwin_Fet_relaxFile='/rigel/ocp/users/tu2140/MITgcm/Southern-Ocean/1D/input/fe_relax/SANT_fet_uniform_10drelax.bin',
+ darwin_seed=11231,
+ &
+
+ &DIC_FORCING
+ DIC_windFile  = ' ',
+# DIC_atmospFile= ' ',
+ dic_int1 = 0,
+ &
