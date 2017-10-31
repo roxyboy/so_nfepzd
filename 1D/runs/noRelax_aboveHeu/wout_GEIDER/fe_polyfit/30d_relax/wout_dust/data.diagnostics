@@ -1,0 +1,105 @@
+# Diagnostic Package Choices
+#--------------------
+#  dumpAtLast (logical): always write output at the end of simulation (default=F)
+#  diag_mnc   (logical): write to NetCDF files (default=useMNC)
+#--for each output-stream:
+#  fileName(n) : prefix of the output file name (max 80c long) for outp.stream n
+#  frequency(n):< 0 : write snap-shot output every |frequency| seconds
+#               > 0 : write time-average output every frequency seconds
+#  timePhase(n)     : write at time = timePhase + multiple of |frequency|
+#    averagingFreq  : frequency (in s) for periodic averaging interval
+#    averagingPhase : phase     (in s) for periodic averaging interval
+#    repeatCycle    : number of averaging intervals in 1 cycle
+#  levels(:,n) : list of levels to write to file (Notes: declared as REAL)
+#                when this entry is missing, select all common levels of this list
+#  fields(:,n) : list of selected diagnostics fields (8.c) in outp.stream n
+#                (see "available_diagnostics.log" file for the full list of diags)
+#  missing_value(n) : missing value for real-type fields in output file "n"
+#  fileFlags(n)     : specific code (8c string) for output file "n"
+#--------------------
+# DIAGNOSTICS FOR DIFFUSIVITY TENSOR
+# &diagnostics_list
+#  diag_mnc=.TRUE.,
+#  filename(1) = 'KPPboundary',
+#   frequency(1) = -86400.,
+#   fields(1:2,1) = 'KPPhbl','MXLDEPTH',
+#  filename(2) = 'KPPboundary2',
+#   frequency(2) = -86400.,
+#   fields(1:3,2) = 'KPPviscA','KPPdiffT','KPPRi',
+# &
+ &DIAGNOSTICS_LIST
+  diag_mnc=.TRUE.,
+#  fields(1:3,1) = 'TRAC03 ','DFrITr03','AB_gTr03',
+  fields(1:2,1) = 'KPPhbl ','MXLDEPTH',
+    filename(1) = 'KPPboundary'
+   frequency(1) = 691200.,
+  fields(1:3,2) = 'KPPviscA','KPPdiffS',
+    filename(2) = 'KPPcoeff'
+   frequency(2) = 691200.,
+  fields(1:2,3) = 'TRAC03 ','DFrITr03',
+    filename(3) = 'FeT_tave',
+   frequency(3) = 691200.,
+  fields(1:2,4) = 'TRAC07 ','DFrITr07',
+    filename(4) = 'DOFe_tave',
+   frequency(4) = 691200.,
+  fields(1:2,5) = 'TRAC10 ','DFrITr10',
+    filename(5) = 'ZOO1Fe_tave',
+   frequency(5) = 691200.,
+  fields(1:2,6) = 'TRAC14 ','DFrITr14',
+    filename(6) = 'ZOO2Fe_tave',
+   frequency(6) = 691200.,
+  fields(1:2,7) = 'TRAC18 ','DFrITr18',
+    filename(7) = 'POFe_tave',
+   frequency(7) = 691200.,
+  fields(1:5,8) = 'TRAC03 ','TRAC07 ','TRAC10 ','TRAC14 ','TRAC18 ',
+    filename(8) = 'Fe_snap',
+   timePhase(8) = 0.,
+   frequency(8) = -691200.,
+  fields(1:2,9) = 'TRAC01 ','DFrITr01',
+    filename(9) = 'PO4_tave',
+   frequency(9) = 691200.,
+  fields(1:2,10) = 'TRAC05 ','DFrITr05',
+    filename(10) = 'DOP_tave',
+   frequency(10) = 691200.,
+  fields(1:2,11) = 'TRAC08 ','DFrITr08',
+    filename(11) = 'ZOO1P_tave',
+   frequency(11) = 691200.,
+  fields(1:2,12) = 'TRAC12 ','DFrITr12',
+    filename(12) = 'ZOO2P_tave',
+   frequency(12) = 691200.,
+  fields(1:2,13) = 'TRAC16 ','DFrITr16',
+    filename(13) = 'POP_tave',
+   frequency(13) = 691200.,
+  fields(1:2,14) = 'TRAC22 ','DFrITr22',
+    filename(14) = 'Phy1P_tave',
+   frequency(14) = 691200.,
+  fields(1:2,15) = 'TRAC23 ','DFrITr23',
+    filename(15) = 'Phy2P_tave',
+   frequency(15) = 691200.,
+  fields(1:1,16) = 'PP     ',
+    filename(16) = 'PP_tave',
+   frequency(16) = 691200.,
+  fields(1:7,17) = 'TRAC01 ','TRAC05 ','TRAC08 ','TRAC12 ','TRAC16 ','TRAC22 ','TRAC23 ',
+    filename(17) = 'P_snap',
+   timePhase(17) = 0.,
+   frequency(17) = -691200.,
+  fields(1:2,18) = 'TRAC04 ','DFrITr04',
+    filename(18) = 'SiO2_tave',
+   frequency(18) = 691200.,
+  fields(1:2,19) = 'TRAC11 ','DFrITr11',
+    filename(19) = 'ZOO1Si_tave',
+   frequency(19) = 691200.,
+  fields(1:2,20) = 'TRAC15 ','DFrITr15',
+    filename(20) = 'ZOO2Si_tave',
+   frequency(20) = 691200.,
+  fields(1:2,21) = 'TRAC19 ','DFrITr19',
+    filename(21) = 'POSi_tave',
+   frequency(21) = 691200.,
+  fields(1:4,22) = 'TRAC04 ','TRAC11 ','TRAC15 ','TRAC19 ',
+    filename(22) = 'Si_snap',
+   timePhase(22) = 0.,
+   frequency(22) = -691200.,
+ &
+
+ &DIAG_STATIS_PARMS
+ &
