@@ -1,4 +1,4 @@
-C $Header: /u/gcmpack/MITgcm_contrib/darwin2/verification/monod_1d_carbon/code/monod_init_fixed.F,v 1.3 2011/10/21 20:57:36 stephd Exp $
+C $Header: /u/gcmpack/MITgcm_contrib/darwin2/pkg/monod/monod_init_fixed.F,v 1.5 2012/05/31 21:08:25 stephd Exp $
 C $Name:  $
 
 #include "CPP_OPTIONS.h"
@@ -21,9 +21,9 @@ C     === Global variables ===
 #include "GRID.h"
 #include "DYNVARS.h"
 #include "GCHEM.h"
+#include "DARWIN_PARAMS.h"
 #include "MONOD_SIZE.h"
 #include "MONOD.h"
-#include "DARWIN_PARAMS.h"
 #include "DARWIN_FLUX.h"
 
         INTEGER myThid
@@ -82,21 +82,21 @@ c for chl
       chlpmin=16. _d 0                      ! mg Chl/mmolP
       istar=90. _d 0                        ! w/m2
 c iron related
-      alpfe=     1.00 _d 0                  !solubility of Fe dust
-      scav=      0.4 _d 0/(360. _d 0*86400. _d 0) !iron chem scavenging rate (s-1)
+      alpfe=     0.04 _d 0                  !solubility of Fe dust
+      scav=      0.4 _d 0/(360. _d 0*pday) !iron chem scavenging rate (s-1)
       ligand_tot=1. _d -3                   !total ligand (uM)
       ligand_stab=2. _d 5                   !ligand stability rate ratio
-      freefemax = .1 _d -3                  ! max free fe
+      freefemax = .4 _d -3                  ! max free fe
 
 #ifdef IRON_SED_SOURCE
 c iron sediment source
-      depthfesed=7000.0 _d 0       !depth above which to add sediment source
-      fesedflux =1.0 _d 0 * 1.0 _d -3 / (86400.0 _d 0) !iron flux (mmol/m2/s)
+      depthfesed=1000.0 _d 0       !depth above which to add sediment source
+      fesedflux =1.0 _d 0 * 1.0 _d -3 / pday !iron flux (mmol/m2/s)
       fesedflux_pcm =0.68 _d 0 * 1.0 _d -3 !iron flux (mmol/m3/s) per
 c                                            mmol POC/m3/s
 #endif
 #ifdef PART_SCAV
-      scav_rat=2. _d 0 * 0.005 _d 0 /(86400.0 _d 0)
+      scav_rat=0.005 _d 0 / pday
       scav_inter=0.079 _d 0
       scav_exp=0.58 _d 0
 #endif
@@ -118,53 +118,44 @@ c i.e. Knitb ...    NO2 -> NO3
 c critical light level (muEin/m2/s) after which oxidation starts
        PAR0 = 10. _d 0
 c
-#ifndef GEIDER
-c set growth days ...small or big organism?
-c NADR: biggrow: 3.3 worked okay 
-c       Smallgrow = 0.5 _d 0
-c       Biggrow   = 0.4 _d 0 
-c ** Edit by Takaya (SANT growth rate: 1.3 and 1.1 per day)
-       Smallgrow = 1.0 _d 0/1.3 _d 0
-       Biggrow   = 1.0 _d 0/1.1 _d 0
-       Smallgrowrange = 0. _d 0
-       Biggrowrange = 0. _d 0
-       diaz_growfac = 2. _d 0
-#endif
-
 c set mort days ...small or big organism?
-c       Smallmort = 10. _d 0
-c       Bigmort   = 10. _d 0
-c ** Edit by Takaya (SANT mortality rate: 0.067 (=1/15) per day)
-       Smallmort = 15.0 _d 0
-       Bigmort   = 15.0 _d 0
+       Smallmort = 10. _d 0
+       Bigmort   = 10. _d 0
        Smallmortrange = 0. _d 0
        Bigmortrange = 0. _d 0
 c set export fraction ...small or big organism?
-       Smallexport = 0.05 _d 0
+       Smallexport = 0.2 _d 0
        Bigexport   = 0.5 _d 0
 c set sinking rates (m/s)... small or big organism?
        SmallSink = 0.0 _d 0/pday
        BigSink =  0.5 _d 0/pday   !0.5 _d 0/pday
-c set parameters for light function for phyto growth
+c
 #ifndef GEIDER
+ccc GEIDER off ccc
+c set growth days ...small or big organism?
+       Smallgrow = .7 _d 0
+       Biggrow   = .4 _d 0
+       Smallgrowrange = 0. _d 0
+       Biggrowrange = 0. _d 0
+       diaz_growfac = 2. _d 0
+c set parameters for light function for phyto growth
        smallksatpar =    0.12 _d 0 ! 0.8 _d 0
        smallksatparstd = 0.20 _d 0  ! 0.3 _d 0
-       smallkinhib =     3.0 _d 0   ! 2.0 _d 0
+       smallkinhib =     6.0 _d 0   ! 2.0 _d 0
        smallkinhibstd =  0.10 _d 0  ! 0.5 _d 0
        Bigksatpar =      0.12 _d 0  ! 0.35 _d 0
        Bigksatparstd =   0.06 _d 0  ! 0.1 _d 0
        Bigkinhib =       1.0 _d 0   ! 0.5 _d 0
        Bigkinhibstd =    0.05 _d 0   ! 0.1 _d 0
-#endif
-#ifdef  GEIDER
+#else
+ccc GEIDER on ccc
 c for Pcm -- should be growth rates, but using old variables
 c note these are in terms of days - converted to 1/s later
-c ** Commented out by Takaya
-c       Smallgrow = .7 _d 0
-c       Biggrow   = .4 _d 0
-c       Smallgrowrange = 0. _d 0
-c       Biggrowrange = 0. _d 0
-c*****************
+c
+       Smallgrow = .7 _d 0
+       Biggrow   = .4 _d 0
+       Smallgrowrange = 0. _d 0
+       Biggrowrange = 0. _d 0
        diaz_growfac = 2. _d 0
 c
        smallchl2cmax = 0.2 _d 0      !mg Chl (mmol C)
@@ -205,11 +196,9 @@ c set temperature function
        temprange = 32. _d 0    ! 30. _d 0
        tempnorm = 0.3 _d 0  ! 1. _d 0
        tempdecay = 4. _d 0
-c set phosphate half stauration constants .. small or big organismi
-c luke changed SmallPsat from 0.015 to 0.01
-c luke changed BigPSat from 0.035 to 0.015
-       SmallPsat=0.025 _d 0
-       BigPsat=0.105 _d 0
+c set phosphate half stauration constants .. small or big organism
+       SmallPsat=0.015 _d 0
+       BigPsat=0.035 _d 0
        ProcPsat=0.01 _d 0
        UniDzPsat=0.012 _d 0
        SmallPsatrange=0.02 _d 0
@@ -238,6 +227,7 @@ c set nutrient ratios for phyto
        val_R_PC=120.0 _d 0
        val_R_PICPOC=0.8 _d 0
 #ifdef OLD_GRAZE
+ccc OLD_GRAZE on ccc
 c grazing hlaf saturation
        kgrazesat = 0.1 _d 0
 c set grazing rates .. small or big organism?
@@ -251,16 +241,17 @@ c set grazing of diatom factor
        coccograz = 0.7 _d 0
        olargegraz = 0.9 _d 0
 #else
+ccc OLD_GRAZE off ccc
 c grazing hlaf saturation
 c      kgrazesat = 0.1 _d 0
-       kgrazesat = 0.085 _d 0
+       kgrazesat = 0.1 _d 0
 c      phygrazmin = 1 _d -5
        phygrazmin = 1 _d -10
 c set grazing rates .. small or big organism?
 c      GrazeFast = 1.0 _d 0/(5.0 _d 0*pday)
-       GrazeFast = 2.5 _d 0/(2.0 _d 0*pday)
+       GrazeFast = 1.0 _d 0/(2.0 _d 0*pday)
 c      GrazeSlow = 1.0 _d 0/(30.0 _d 0*pday)
-       GrazeSlow = 1.25 _d 0/(7.0 _d 0*pday)
+       GrazeSlow = 1.0 _d 0/(7.0 _d 0*pday)
 c set grazing effeciency
        GrazeEfflow= 0.2 _d 0
        GrazeEffmod= 0.5 _d 0
@@ -269,12 +260,12 @@ c set palatibility
        palathi = 1.0 _d 0
        palatlo = 0.2 _d 0
 c set palatibilty diatom factor
-       diatomgraz = 0.85 _d 0
-       coccograz = 0.85 _d 0
-       olargegraz = 0.9 _d 0
+       diatomgraz = 0.7 _d 0
+       coccograz = 0.6 _d 0
+       olargegraz = 1.0 _d 0
 c set faction graz to POM
-       ExGrazfracbig = 0.6 _d 0
-       ExGrazfracsmall = 0.3 _d 0
+       ExGrazfracbig = 0.8 _d 0
+       ExGrazfracsmall = 0.8 _d 0
 c grazing exponential 1= holling 2, 2=holling 3
        hollexp=1.0 _d 0
 #endif
@@ -284,46 +275,57 @@ c set zoo mortality
        ZoomortSmall2 = 0. _d 0
        ZoomortBig2 = 0. _d 0
 c set zoo exportfrac
-       ZooexfacSmall = 0.1 _d 0
-       ZooexfacBig = 0.5 _d 0
+       ZooexfacSmall = 0.2 _d 0
+       ZooexfacBig = 0.7 _d 0
 c minimum phyto (below which grazing and mortality doesn't happen)
 c      phymin = 1 _d -10
 c      phymin = 1 _d -50
        phymin = 1 _d -20
 c DOM remin rates
-         Kdop = 2.0 _d 0/(100.0 _d 0*pday)
-         Kdon = 2.0 _d 0/(100.0 _d 0*pday)
-         KdoFe = 2.0 _d 0/(100.0 _d 0*pday)
+       Kdop = 1.0 _d 0/(100.0 _d 0*pday)
+       Kdon = 1.0 _d 0/(100.0 _d 0*pday)
+       KdoFe = 1.0 _d 0/(100.0 _d 0*pday)
 c Particulate detritus remin rates
 c z* = wx_sink/Kremin_X
 c for e-folding length scale, z* = 300 m
 c choose Kremin_X = 1/30 day-1, wx_sink = 10 m day-1
-         Kpremin_P = 1.0 _d 0/(10.0 _d 0*pday)
-         Kpremin_N = Kpremin_P
-         Kpremin_Fe = Kpremin_P
-         Kpremin_Si = 2.0 _d 0/(300.0 _d 0*pday)
+       Kpremin_P = 1.0 _d 0/(50.0 _d 0*pday)
+       Kpremin_N = Kpremin_P
+       Kpremin_Fe = Kpremin_P
+       Kpremin_Si = 1.0 _d 0/(300.0 _d 0*pday)
 c sinking rate for particulate matter (m/s)
-         wp_sink = 10.0 _d 0/pday
-         wn_sink = wp_sink
-         wfe_sink = wp_sink
-         wsi_sink = wp_sink
+       wp_sink = 10.0 _d 0/pday
+       wn_sink = wp_sink
+       wfe_sink = wp_sink
+       wsi_sink = wp_sink
 
 #ifdef ALLOW_CARBON
          R_OP = 170 _d 0
          Kdoc = 1.0 _d 0/(100.0 _d 0*pday)
-         Kpremin_C = 1.0 _d 0/(10.0 _d 0*pday)
+         Kpremin_C = 1.0 _d 0/(50.0 _d 0*pday)
          Kdissc =  1.0 _d 0/(300.0 _d 0*pday)
          wc_sink = wp_sink
          wpic_sink = 15.0 _d 0/pday
          permil      = 1. _d 0 / 1024.5 _d 0
          Pa2Atm      = 1.01325 _d 5
+#endif
+
+#ifdef ALLOW_CDOM
+         fraccdom=2. _d 0 / 100. _d 0
+         cdomdegrd= 1. _d 0 / (200 _d 0 *pday)
+         cdombleach = 1. _d 0 / (15 _d 0 *pday)
+         PARcdom  = 20. _d 0
+         rnp_cdom = 16. _d 0
+         rfep_cdom = 1. _d -3
+         rcp_cdom  = 120. _d 0
+         cdomcoeff = .1 _d -1  / 1.d -4
+#endif
 
 ccccccccccccccccccccccccccccccccccccccccc
 c lukes parameters 
 ccccccccccccccccccccccccccccccccccccccccc 
-          luke_zeu      = -100.0 _d 0  ! euphotic dpeth (m)
-
-#endif
+         luke_zeu      = -100.0 _d 0  ! euphotic dpeth (m)
+ 
 
 C make sure we have reserved enough space in Ptracers
       IF ( nCompZooMax .LT. 4 ) THEN
@@ -356,6 +358,9 @@ c diver3 - fraction of biomass to count
         diver_thresh3=.999 _d 0
 c diver4 - fraction of maximum species
         diver_thresh4=1 _d -5
+c threshold on total biomass for contributing to Shannon and Simpson ind
+c (these become large at very small biomass)
+        shannon_thresh = 1 _d -8   ! mmol P m-3
 #endif
 
 c set up diagnostics

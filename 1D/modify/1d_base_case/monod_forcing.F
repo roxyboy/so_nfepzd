@@ -1078,6 +1078,7 @@ c --------------------------
             if (darwin_relaxscale.gt.0. _d 0) then
              IF ( darwin_PO4_RelaxFile .NE. ' '  ) THEN
               tmp=(Ptr(i,j,k,bi,bj,iPO4 )-po4_obs(i,j,k,bi,bj))
+
               if (tmp.ne.0. _d 0) then
                 dpo4l=dpo4l-(tmp/
      &                      darwin_relaxscale)

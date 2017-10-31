@@ -23,7 +23,6 @@ CEOP
 #define RELAX_NUTS
 #undef  CONS_SUPP
 #undef  OLD_GRAZE
-#undef  ALLOW_DIAZ
 #undef  OLD_NSCHEME
 #undef  ALLOW_MUTANTS
 #define PORT_RAND
@@ -33,28 +32,30 @@ CEOP
 #define TEMP_VERSION 2
 #define TEMP_RANGE
 
+c Number of species. Diazotroph (ALLOW_DIAZ) gets turned off when only two species
+c Diazotrophs convert atmospheric nitrogen to organic nitrate
 #define TWO_SPECIES_SETUP
 #undef NINE_SPECIES_SETUP
 
 #define CALC_RATE_TOTALS
 
-#define IRON_SED_SOURCE
-#define IRON_SED_SOURCE_VARIABLE
+#undef IRON_SED_SOURCE
+#undef IRON_SED_SOURCE_VARIABLE
 #define PART_SCAV
 
 #define ALLOW_DIAZ
 #define ALLOW_DENIT
 #undef  DENIT_RELAX
 
+c Carbon cycle flag
 #define ALLOW_CARBON
 #define ALLOW_OLD_VIRTUALFLUX
 
-
-#undef  GEIDER
+c GEIDER flag
+#undef GEIDER
 
 c ANNA turn wavebands on/off
 #undef WAVEBANDS 
-c#define WAVEBANDS
 
 #undef  CHECK_CONS
 #undef  DAR_DIAG_RSTAR
