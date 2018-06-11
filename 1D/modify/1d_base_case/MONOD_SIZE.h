@@ -76,6 +76,8 @@ C remember to bring the fields in data.ptracers in the right order !
       PARAMETER (nCompZooMax=4)
       PARAMETER (strideCompZoo=1)
       PARAMETER (strideTypeZoo=nCompZooMax)
+c      PARAMETER (strideCompZoo=nzmax)
+c      PARAMETER (strideTypeZoo=1)
       PARAMETER (iPO4  =1)
       PARAMETER (iNO3  =2)
       PARAMETER (iFeT  =3)

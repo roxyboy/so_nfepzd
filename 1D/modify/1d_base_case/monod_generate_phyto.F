@@ -90,6 +90,8 @@ c at this point independent of whether diatom or coccolithophor or not
           physize(np) = 0.0 _d 0
         end if
 #ifdef TWO_SPECIES_SETUP
+c commented added by Luke
+c phyto either "small" (physize(np)=0.0) or "big" (physize(np)=1.0)
         if (np.eq.1) physize(np) = 1.0 _d 0
         if (np.eq.2) physize(np) = 0.0 _d 0
 #endif
@@ -117,13 +119,19 @@ c
 c phyto either diatoms (diacoc=1.0) and use silica or cocolithophor
 c (diacoc=2.0) and produce PIC or neither (diacoc=0.0)
 c if they are large
-        if (physize(np).eq.1.0 _d 0) then
-          RandNo = darwin_random(myThid)
-          if(RandNo .gt. 0.500 _d 0)then
-            diacoc(np) = 1.0 _d 0
-          else
-            diacoc(np) = 0.0 _d 0
-          endif
+
+c this was changed by luke for gloege et al. 2017
+c this was commented out on May 14 2018 by Luke
+c We want all large phytoplankt (physize ==1)
+c to use silica and we want 7% to to be calcifiers
+c we set the 7% when PIC 
+c        if (physize(np).eq.1.0 _d 0) then
+c          RandNo = darwin_random(myThid)
+c          if(RandNo .gt. 0.500 _d 0)then
+c            diacoc(np) = 1.0 _d 0
+c          else
+c            diacoc(np) = 0.0 _d 0
+c          endif
 c         if(RandNo .gt. 0.670 _d 0)then
 c           diacoc(np) = 1.0 _d 0
 c         endif
@@ -133,21 +141,30 @@ c         endif
 c         if (RandNo .le. 0.330 _d 0) then
 c           diacoc(np) = 0.0 _d 0
 c         endif
-        else
+c        else
 c changed by luke gloege
 c want 7% small phytoplankton to produce PIC
-          RandNo = darwin_random(myThid)
-          if(RandNo .le. 0.07 _d 0)then
-            diacoc(np) = 2.0 _d 0
-          else
-            diacoc(np) = 0.0 _d 0
-          endif
-        endif
+c          RandNo = darwin_random(myThid)
+c          if(RandNo .le. 0.07 _d 0)then
+c            diacoc(np) = 2.0 _d 0
+c          else
+c            diacoc(np) = 0.0 _d 0
+c          endif
+c        endif
 #ifdef TWO_SPECIES_SETUP
-c commented out by luke gloege
-c want small phytoplankton to use PIC
-c and want some diatoms to use silicate
-c        diacoc(np) = 0.0 _d 0
+c want large phytoplankton to use silica
+c this was originally 0.0
+c bug in the code???
+c Agreed by Takaya: we want to keep silicate dependency
+c In TWO_SPECIES_SETUP, the large phyto is (presumably) always diatoms
+c        diacoc(np) = 0.0 _d 0 ! default
+c From monod_generate_zoo.F, we find that if physize=1., diatom (diacoc=1.),
+c prochlorococcus (diacoc=2.) and large non-diatom phyto (diacoc=0.)
+        if (physize(np).eq.1.0 _d 0) then
+            diacoc(np) = 1.0 _d 0
+        else 
+            diacoc(np) = 0.0 _d 0
+        endif
 #endif
 #ifdef NINE_SPECIES_SETUP
         if (np.eq.1) then
@@ -210,6 +227,8 @@ c but diazotrophs always slower due to energetics
             growthdays = growthdays * diaz_growfac
         endif 
 #ifdef TWO_SPECIES_SETUP
+c commented added by Luke
+c sets which growth rate to use for "big" and "small" phyto
         if(physize(np) .eq. 1.0 _d 0)then
           growthdays = Biggrow 
         else
@@ -253,6 +272,8 @@ c big/small phyto mortality rates..
           ExportFracP(np)=Smallexport
         end if
 #ifdef TWO_SPECIES_SETUP
+c commented added by Luke
+c sets which mortality to use for "big" and "small" phyto
         if(physize(np) .eq. 1.0 _d 0)then
           mortdays = Bigmort
         else
@@ -434,7 +455,8 @@ c
 
 #else
 c ANNA number of RandNo's carreid out MUST MATCH regardless of wavebands or not.
-C ANNA the number of RandNo statements here MUST MATCH the number done above
+C ANNA the number of RandNo statements here MUST MATCH the number done
+C above
 
 c        RandNo = darwin_random(myThid)
 c        RandNo = darwin_random(myThid)
@@ -787,3 +809,4 @@ c ANNA STEPH msgBuf changed for mQyield?
 #endif  /*ALLOW_PTRACERS*/
 
 c ===========================================================
+

@@ -1,4 +1,5 @@
-C $Header: /u/gcmpack/MITgcm_contrib/darwin2/pkg/monod/monod_forcing.F,v 1.6 2012/05/31 21:08:25 stephd Exp $
+C $Header: /u/gcmpack/MITgcm_contrib/darwin2/pkg/monod/monod_forcing.F,v
+C 1.6 2012/05/31 21:08:25 stephd Exp $
 C $Name:  $
 
 #include "CPP_OPTIONS.h"
@@ -58,7 +59,8 @@ C     ==  Functions ==
       EXTERNAL DIFF_PHASE_MULTIPLE
 #endif
 
-C============== Local variables ============================================
+C============== Local variables
+C============================================
 c plankton arrays
       _RL  ZooP(nzmax)
       _RL  ZooN(nzmax)
@@ -172,10 +174,16 @@ c ANNA end TAVE
       _RL CloernChl2Carr(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr)
 #endif
 #endif
-c   
+c  ballast 
       _RL freefu
       _RL inputFel
-
+      _RL inputDustl
+      _RL dusthinl
+      _RL dustsinl
+      _RL pocqahinl
+      _RL pocqasinl
+      _RL pocqainl
+      INTEGER lukevar
 c some local variables
        _RL PO4l
        _RL NO3l
@@ -199,6 +207,8 @@ c some local variables
        _RL NO2l
        _RL PARl
        _RL dzlocal
+       _RL ztoplocal
+       _RL zbotlocal
        _RL dz_k(Nr)
        _RL dtplankton
        _RL bottom
@@ -248,6 +258,36 @@ c local tendencies
        _RL ZooCl(nzmax)
        _RL pocupl
        _RL picupl
+       _RL psihl
+       _RL psihupl
+       _RL pichl
+       _RL pichupl
+       _RL pochpl
+       _RL pochpupl
+       _RL pochsl
+       _RL pochsupl
+       _RL pocspl
+       _RL pocspupl
+       _RL pocssl
+       _RL pocssupl
+       _RL pochdl
+       _RL pochdupl
+       _RL pocsdl
+       _RL pocsdupl
+       _RL dustsl 
+       _RL dustsupl
+       _RL dusthl
+       _RL dusthupl
+c ballast production terms
+       _RL dustprodinl
+       _RL pocnfl
+       _RL pocfl
+       _RL poclprod
+       _RL psilprod
+       _RL piclprod
+       _RL pocuplprod
+       _RL psiuplprod
+       _RL picuplprod
 c tendencies
        _RL ddicl
        _RL ddocl
@@ -256,6 +296,39 @@ c tendencies
        _RL dalkl
        _RL do2l
        _RL dZooCl(nzmax)
+       _RL dpsihl
+       _RL dpichl
+       _RL dpochpl
+       _RL dpochsl
+       _RL dpocspl 
+       _RL dpocssl
+       _RL dpocqastmpl
+       _RL dpocqahtmpl
+       _RL dpocqatmpl
+       _RL dpocqasl
+       _RL dpocqahl
+       _RL dpochdl
+       _RL dpocsdl
+       _RL ddusthl
+       _RL ddustsl
+c ballast local tendencies
+       _RL dpocprodl
+       _RL dpicprodl
+       _RL dpsiprodl
+       _RL dpocfreel
+       _RL dpocnonfreel
+       _RL dpcaco3l
+       _RL ddustsoftl
+       _RL ddusthardl
+       _RL dpocnfprodl
+       _RL dpocfprodl
+c ballast local up tendencies
+       _RL dpocavaill
+c ballast upper fluxes
+       _RL pocnfupl
+       _RL pocfupl 
+       _RL ddustsfluxoupl
+       _RL ddusthfluxoupl
 c air-sea fluxes
        _RL flxCO2(1-OLx:sNx+OLx,1-OLy:sNy+OLy)
        _RL flxALK(1-OLx:sNx+OLx,1-OLy:sNy+OLy)
@@ -265,8 +338,26 @@ c air-sea fluxes
        _RL tot_Nfix
 
        _RL tmp
+       _RL tmpflxpocfree
+       _RL tmpflxpicsoft
+       _RL tmpflxpichard
+       _RL tmpflxsisoft
+       _RL tmpflxsihard
+       _RL tmpflxdsoft
+       _RL tmpflxdhard
+
+       _RL flxpocfree
+       _RL flxpicsoft
+       _RL flxpichard
+       _RL flxsisoft
+       _RL flxsihard
+       _RL flxdustsoft
+       _RL flxdusthard
 
        _RL phytmp, chltmp
+
+       _RL flx, tmpflx
+      INTEGER kflx
 
       INTEGER i,j,k,it, ktmp
       INTEGER np, nz, np2, npsave
@@ -393,7 +484,8 @@ C        0 -> 1, 1->2, 2->0, ...
 #ifdef   ALLOW_DIAGNOSTICS
 C        always fill; this will be the same during PARavPeriod, but this
 C        way it won't blow up for weird diagnostics periods.
-C        we fill before updating, so the diag is the one used in this time
+C        we fill before updating, so the diag is the one used in this
+C        time
 C        step
          CALL DIAGNOSTICS_FILL(
      &         PARday(1-Olx,1-Oly,1,bi,bj,PARiprev),'PARday  ',
@@ -574,7 +666,8 @@ c ------------ FULL RADIATIVE TRANSFER CODE ----------------------------
          enddo
 
 #ifdef DAR_RADTRANS_USE_MODEL_CALENDAR
-C simplified solar zenith angle for 360-day year and daily averaged light
+C simplified solar zenith angle for 360-day year and daily averaged
+C light
 C cos(solz) is average over daylight period
          call darwin_solz360(newtime, YC(i,j,bi,bj),
      O                       solz)
@@ -691,13 +784,29 @@ c brute force...
 #ifdef ALLOW_CARBON
              dicl  = max(Ptr(i,j,k,bi,bj,iDIC  ),0. _d 0)
              docl  = max(Ptr(i,j,k,bi,bj,iDOC  ),0. _d 0)
-             pocl  = max(Ptr(i,j,k,bi,bj,iPOC  ),0. _d 0)
+             pocl  = max(Ptr(i,j,k,bi,bj,iPOC  ),0. _d 0) 
              picl  = max(Ptr(i,j,k,bi,bj,iPIC  ),0. _d 0)
              alkl  = max(Ptr(i,j,k,bi,bj,iALK  ),0. _d 0)
              o2l   = max(Ptr(i,j,k,bi,bj,iO2   ),0. _d 0)
              DO nz = 1,nzmax
                ZooCl(nz)  = max(Ptr(i,j,k,bi,bj,iZooC (nz)),0. _d 0)
              ENDDO
+             psihl  = max(Ptr(i,j,k,bi,bj,iPOSih  ),0. _d 0)
+             pichl  = max(Ptr(i,j,k,bi,bj,iPICh   ),0. _d 0)
+             pochpl = max(Ptr(i,j,k,bi,bj,iPOChp  ),0. _d 0)
+             pochsl = max(Ptr(i,j,k,bi,bj,iPOChs  ),0. _d 0)
+             pocspl = max(Ptr(i,j,k,bi,bj,iPOCsp  ),0. _d 0)
+             pocssl = max(Ptr(i,j,k,bi,bj,iPOCss  ),0. _d 0)
+             pochdl = max(Ptr(i,j,k,bi,bj,iPOChd  ),0. _d 0)
+             pocsdl = max(Ptr(i,j,k,bi,bj,iPOCsd  ),0. _d 0)
+             dustsl = max(Ptr(i,j,k,bi,bj,iDUSTs  ),0. _d 0)
+             dusthl = max(Ptr(i,j,k,bi,bj,iDUSTh  ),0. _d 0)
+c ballast local production
+             pocnfl = max(Ptr(i,j,k,bi,bj,iPOC ), 0. _d 0)
+             pocfl  = max(Ptr(i,j,k,bi,bj,iPOC ), 0. _d 0)
+             poclprod = max(Ptr(i,j,k,bi,bj,iPOC  ),0. _d 0)
+             psilprod = max(Ptr(i,j,k,bi,bj,iPOC ),0. _d 0)
+             piclprod = max(Ptr(i,j,k,bi,bj,iPOC ),0. _d 0)
 #endif
 
              totphyC = 0. _d 0
@@ -797,8 +906,24 @@ c for explicit sinking of particulate matter and phytoplankton
 #endif
                 enddo
 #ifdef ALLOW_CARBON
-                pocupl = 0. _d 0
-                picupl = 0. _d 0
+                pocupl   = 0. _d 0
+                picupl   = 0. _d 0
+                psihupl  = 0. _d 0 
+                pichupl  = 0. _d 0
+                pochpupl = 0. _d 0
+                pochsupl = 0. _d 0
+                pocspupl = 0. _d 0
+                pocssupl = 0. _d 0
+                pochdupl = 0. _d 0 
+                pocsdupl = 0. _d 0
+                dustsupl = 0. _d 0
+                dusthupl = 0. _d 0
+c ballast intitalize production
+                pocuplprod = 0. _d 0
+                psiuplprod = 0. _d 0
+                picuplprod = 0. _d 0
+                pocnfupl = 0. _d 0
+                pocfupl  = 0. _d 0  
 #endif
              endif
 
@@ -810,14 +935,43 @@ c for explicit sinking of particulate matter and phytoplankton
              Slocal = salt(i,j,k,bi,bj)
 #endif
 
+c             dzlocal = drF(k)*HFacC(i,j,k,bi,bj)
+             dzlocal = drF(k)
+             ztoplocal = rF(k)
+             zbotlocal = rF(k+1)
              freefu = max(freefe(i,j,k),0. _d 0)
              if (k.eq.1) then
                inputFel = inputFe(i,j,bi,bj)
+c----------------------------------------------------------
+c Initialize dust deposiation as production in top cell
+c used in ballast model - L. gloege 2016
+c----------------------------------------------------------
+               lukevar     = 1  ! 1 if dustPOC > POC avail 0 if dustPOC < POCavail
+               inputDustl  = inputDust(i,j,bi,bj)*1000    ! Dust deposition (mg/m^2/s)
+               dustprodinl = (inputDustl)/dzlocal   ! Dust "production"
+               dusthinl    = (1-f_dust_bio)*(f_dust_hard) *dustprodinl 
+               dustsinl    = (1-f_dust_bio)*(1-f_dust_hard)*dustprodinl 
+               pocqahinl   = omega_dust * dusthinl  ! POC qual. assoc. with h dust
+               pocqasinl   = omega_dust * dustsinl  ! POC qual. assoc. with s dust
+               pocqainl    = pocqasinl  + pocqahinl
+c               WRITE( *,'(A,D)') 'lukeDUSThin ', dusthinl
+c               WRITE( *,'(A,D)') 'lukeDUSTsin ', dustsinl
+c               WRITE( *,'(A,D)') 'lukePOCqahin ', pocqahinl
+c               WRITE( *,'(A,D)') 'lukePOCqasin ', pocqasinl
+c               WRITE( *,'(A,D)') 'lukePOCqain ', pocqainl
+c----------------------------------------------------------
              else
                inputFel = 0. _d 0
+               inputDustl = 0. _d 0
              endif
 
-             dzlocal = drF(k)*HFacC(i,j,k,bi,bj)
+c            WRITE( *,'(A,D)') 'lukeDZ ', dzlocal
+            
+
+c             dzlocal = drF(k)*HFacC(i,j,k,bi,bj)
+c             ztoplocal = rF(k)
+c             zbotlocal = rF(k+1)
+
 c set bottom=1.0 if the layer below is not ocean
              ktmp=min(nR,k+1)
              if(hFacC(i,j,ktmp,bi,bj).eq.0. _d 0.or.k.eq.Nr) then
@@ -867,6 +1021,34 @@ c set tendencies to 0
              do nz=1,nzmax
                dzoocl(nz)=0. _d 0
              enddo
+             dpsihl=0. _d 0
+             dpichl=0. _d 0
+             dpochpl=0. _d 0
+             dpochsl=0. _d 0
+             dpocspl=0. _d 0
+             dpocssl=0. _d 0
+             dpocqastmpl=0. _d 0
+             dpocqahtmpl=0. _d 0
+             dpocqatmpl=0. _d 0
+             dpocqasl=0. _d 0
+             dpocqahl=0. _d 0
+             dpochdl=0. _d 0
+             dpocsdl=0. _d 0
+             ddusthl=0. _d 0
+             ddustsl=0. _d 0
+c ballast stuff
+             dpocprodl=0. _d 0
+             dpicprodl=0. _d 0
+             dpsiprodl=0. _d 0
+             dpcaco3l=0. _d 0
+             ddustsoftl=0. _d 0
+             ddusthardl=0. _d 0
+             dpocfreel=0. _d 0
+             dpocnonfreel=0. _d 0
+c 
+             dpocnfprodl=0. _d 0
+             dpocfprodl=0. _d 0
+             dpocavaill=0. _d 0
 #endif
 c set other arguments to zero
              PP=0. _d 0
@@ -926,8 +1108,13 @@ c ANNA pass extra variables if WAVEBANDS
      I                       pofeupl, psiupl,
      I                       PARl,
      I                       Tlocal, Slocal,
-     I                       freefu, inputFel,
-     I                       bottom, dzlocal,
+     I                       freefu, inputFel, inputDustl,
+     I                       bottom, dzlocal, 
+     I                       ztoplocal, zbotlocal,
+     I                       dusthinl, dustsinl,
+     I                       pocqahinl, pocqasinl,
+     I                       pocqainl,
+     I                       lukevar,
      O                       Rstarl, RNstarl,
 #ifdef DAR_DIAG_GROW
      O                       Growl, Growsql,
@@ -945,17 +1132,47 @@ c ANNA pass extra variables if WAVEBANDS
      O                       dPOPl, dPONl, dPOFel, dPSil,
 #ifdef ALLOW_CARBON
      I                       dicl, docl, pocl, picl,
+     I                       pocnfl, pocfl, poclprod,
      I                       alkl, o2l, zoocl,
-     I                       pocupl, picupl,
+     I                       pocupl, picupl, pocuplprod,
+     I                       psilprod, piclprod,
+     I                       psiuplprod, picuplprod,
+     I                       pocnfupl,
+     I                       pocfupl,
+     I                       ddustsfluxoupl,
+     I                       ddusthfluxoupl,
+     I                       psihl, psihupl,
+     I                       pichl, pichupl,
+     I                       pochpl, pochpupl,
+     I                       pochsl, pochsupl,
+     I                       pocspl, pocspupl,
+     I                       pocssl, pocssupl,
+     I                       pochdl, pochdupl,
+     I                       pocsdl, pocsdupl,
+     I                       dustsl, dustsupl,
+     I                       dusthl, dusthupl,
      O                       ddicl, ddocl, dpocl, dpicl,
-     O                       dalkl, do2l, dzoocl,
+     O                       dalkl, do2l, dzoocl, 
+     O                       dpocnonfreel, phy1pocl, phy2pocl,
+     O                       dpocfreel, dpsio3l, dpcaco3l,
+     O                       ddustsoftl, ddusthardl, ddustl,
+     O                       dpocprodl, dpicprodl, dpsiprodl,
+     O                       dpocnfprodl, dpocfprodl,
+     O                       dpocavaill,
+     O                       dpsihl, dpichl,
+     O                       dpochpl, dpochsl,
+     O                       dpocspl, dpocssl,
+     O                       dpocqastmpl, dpocqahtmpl, dpocqatmpl,
+     O                       dpocqasl, dpocqahl,
+     O                       dpochdl, dpocsdl,
+     O                       ddusthl, ddustsl,
 #endif
 #ifdef GEIDER
      O                       phychl,
 #ifdef DYNAMIC_CHL
      I                       dphychl,
      I                       chlup,
-#endif
+#endif/
 #ifdef ALLOW_CDOM
      O                       dcdoml,
      I                       cdoml,
@@ -1013,17 +1230,46 @@ c convert to dPOCl
 #endif
              enddo
 
-
+c
+c these are the up local terms
+c note: not case senstive (POCl == pocl)
+c you added the production terms
+c luke gloege (ballast)
 c
 #ifdef ALLOW_CARBON
-             pocupl = POCl
-             picupl = PICl
+             pocupl   = POCl
+             picupl   = PICl
+             psihupl  = PSIhl
+             pichupl  = PIChl
+             pochpupl = POChpl
+             pochsupl = POChsl
+             pocspupl = POCspl
+             pocssupl = POCssl
+             pocuplprod = POClprod
+             psiuplprod = PSIlprod
+             picuplprod = PIClprod
+             pochdupl = POChdl
+             pocsdupl = POCsdl
+
+             if (k.eq.1) then
+                dustsupl = dustsinl
+                dusthupl = dusthinl
+             else
+                dustsupl = DUSTsl
+                dusthupl = DUSThl
+             endif
+
 c include surface forcing
              if (k.eq.1) then
               ddicl  =  ddicl  + flxCO2(i,j)
               dalkl  =  dalkl  + flxALK(i,j)
               do2l   =  do2l   + flxO2(i,j)
              endif
+             pocnfupl = POCnfl
+             pocfupl  =  POCfl
+c ballast fluxes tendencies
+             ddustsfluxoupl = ddustsoftl
+             ddusthfluxoupl = ddusthardl
 #endif
 c
 #ifdef CONS_SUPP
@@ -1074,11 +1320,10 @@ c
 c L. Gloege May 2015
 c --------------------------
 
-            if ( rF(k).lt.luke_zeu ) then 
+            if (rF(k).lt.zeu) then 
             if (darwin_relaxscale.gt.0. _d 0) then
              IF ( darwin_PO4_RelaxFile .NE. ' '  ) THEN
               tmp=(Ptr(i,j,k,bi,bj,iPO4 )-po4_obs(i,j,k,bi,bj))
-
               if (tmp.ne.0. _d 0) then
                 dpo4l=dpo4l-(tmp/
      &                      darwin_relaxscale)
@@ -1095,7 +1340,7 @@ c --------------------------
               tmp=(Ptr(i,j,k,bi,bj,iFeT )-fet_obs(i,j,k,bi,bj))
               if (tmp.ne.0. _d 0) then
                 dfetl=dfetl-(tmp/
-     &                      darwin_fetrelaxscale)
+     &                      darwin_relaxscale)
               endif
              ENDIF
              IF ( darwin_Si_RelaxFile .NE. ' '  ) THEN
@@ -1117,43 +1362,40 @@ c tmp.lt.0 (semi relax)
 c tmp.ne.0 (hard relax)
 c
 c L. Gloege May 2015
-c Commented out by Takaya, October 2017
-c I don't think this is appropriate for our set up
-c since we are interested in the euphotic layer
 c ---------------------
 
-c            if ( rF(k).gt.luke_zeu ) then 
-c            if (darwin_relaxscale.gt.0. _d 0) then
-c             IF ( darwin_PO4_RelaxFile .NE. ' '  ) THEN
-c              tmp=(Ptr(i,j,k,bi,bj,iPO4 )-po4_obs(i,j,k,bi,bj))
-c              if (tmp.lt.0. _d 0) then
-c                dpo4l=dpo4l-(tmp/
-c     &                      darwin_relaxscale)
-c              endif
-c             ENDIF
-c             IF ( darwin_NO3_RelaxFile .NE. ' '  ) THEN
-c              tmp=(Ptr(i,j,k,bi,bj,iNO3 )-no3_obs(i,j,k,bi,bj))
-c              if (tmp.lt.0. _d 0) then
-c                dno3l=dno3l-(tmp/
-c     &                      darwin_relaxscale)
-c              endif
-c             ENDIF
-c             IF ( darwin_Fet_RelaxFile .NE. ' '  ) THEN
-c              tmp=(Ptr(i,j,k,bi,bj,iFeT )-fet_obs(i,j,k,bi,bj))
-c              if (tmp.lt.0. _d 0) then
-c                dfetl=dfetl-(tmp/
-c     &                      darwin_fetrelaxscale)
-c              endif
-c             ENDIF
-c             IF ( darwin_Si_RelaxFile .NE. ' '  ) THEN
-c              tmp=( Ptr(i,j,k,bi,bj,iSi  )-si_obs(i,j,k,bi,bj))
-c              if (tmp.lt.0. _d 0) then
-c                dsil=dsil-(tmp/
-c     &                    darwin_relaxscale)
-c              endif
-c             ENDIF
-c            endif
-c            endif
+            if (rF(k).gt.zeu) then 
+            if (darwin_relaxscale.gt.0. _d 0) then
+             IF ( darwin_PO4_RelaxFile .NE. ' '  ) THEN
+              tmp=(Ptr(i,j,k,bi,bj,iPO4 )-po4_obs(i,j,k,bi,bj))
+              if (tmp.lt.0. _d 0) then
+                dpo4l=dpo4l-(tmp/
+     &                      darwin_relaxscale)
+              endif
+             ENDIF
+             IF ( darwin_NO3_RelaxFile .NE. ' '  ) THEN
+              tmp=(Ptr(i,j,k,bi,bj,iNO3 )-no3_obs(i,j,k,bi,bj))
+              if (tmp.lt.0. _d 0) then
+                dno3l=dno3l-(tmp/
+     &                      darwin_relaxscale)
+              endif
+             ENDIF
+             IF ( darwin_Fet_RelaxFile .NE. ' '  ) THEN
+              tmp=(Ptr(i,j,k,bi,bj,iFeT )-fet_obs(i,j,k,bi,bj))
+              if (tmp.lt.0. _d 0) then
+                dfetl=dfetl-(tmp/
+     &                      darwin_relaxscale)
+              endif
+             ENDIF
+             IF ( darwin_Si_RelaxFile .NE. ' '  ) THEN
+              tmp=( Ptr(i,j,k,bi,bj,iSi  )-si_obs(i,j,k,bi,bj))
+              if (tmp.lt.0. _d 0) then
+                dsil=dsil-(tmp/
+     &                    darwin_relaxscale)
+              endif
+             ENDIF
+            endif
+            endif
 #endif
 #endif
 #ifdef FLUX_NUTS
@@ -1234,6 +1476,7 @@ c in darwin_plankton this is stored for previous timestep. Reset here.
      &                                  dtplankton*ddocl
           Ptr(i,j,k,bi,bj,iPOC ) = Ptr(i,j,k,bi,bj,iPOC ) +
      &                                  dtplankton*dpocl
+
           Ptr(i,j,k,bi,bj,iPIC ) = Ptr(i,j,k,bi,bj,iPIC ) +
      &                                  dtplankton*dpicl
           Ptr(i,j,k,bi,bj,iALK ) = Ptr(i,j,k,bi,bj,iALK ) +
@@ -1244,6 +1487,51 @@ c in darwin_plankton this is stored for previous timestep. Reset here.
            Ptr(i,j,k,bi,bj,iZooC (nz)) = Ptr(i,j,k,bi,bj,iZooC (nz)) +
      &                                        dtplankton*dzoocl (nz)
           ENDDO
+
+c----------------------------------------------------------------------
+c ballast portion of code
+c the term after dtplankton needs to be changed!!
+c----------------------------------------------------------------------
+
+          Ptr(i,j,k,bi,bj,iPOSih) = Ptr(i,j,k,bi,bj,iPOSih) +
+     &                                  dtplankton*dpsihl
+     
+          Ptr(i,j,k,bi,bj,iPICh) = Ptr(i,j,k,bi,bj,iPICh) +
+     &                                  dtplankton*dpichl
+
+          Ptr(i,j,k,bi,bj,iPOChp ) = Ptr(i,j,k,bi,bj,iPOChp ) +
+     &                                  dtplankton*dpochpl
+ 
+          Ptr(i,j,k,bi,bj,iPOChs ) = Ptr(i,j,k,bi,bj,iPOChs ) +
+     &                                  dtplankton*dpochsl
+
+          Ptr(i,j,k,bi,bj,iPOCsp ) = Ptr(i,j,k,bi,bj,iPOCsp ) +
+     &                                  dtplankton*dpocspl
+
+          Ptr(i,j,k,bi,bj,iPOCss ) = Ptr(i,j,k,bi,bj,iPOCss ) +
+     &                                  dtplankton*dpocssl
+
+c dust stuff
+          Ptr(i,j,k,bi,bj,iPOChd ) = Ptr(i,j,k,bi,bj,iPOChd ) +
+     &                                  dtplankton*dpochdl
+
+          Ptr(i,j,k,bi,bj,iPOCsd ) = Ptr(i,j,k,bi,bj,iPOCsd ) +
+     &                                  dtplankton*dpocsdl
+
+          Ptr(i,j,k,bi,bj,iDUSTh ) = Ptr(i,j,k,bi,bj,iDUSTh ) +
+     &                                  dtplankton*ddusthl
+
+          Ptr(i,j,k,bi,bj,iDUSTs ) = Ptr(i,j,k,bi,bj,iDUSTs ) +
+     &                                  dtplankton*ddustsl
+
+          Ptr(i,j,k,bi,bj,iPOCflux ) = 
+     &                       (Ptr(i,j,k,bi,bj,iPOChp) * wpic_sink) +
+     &                       (Ptr(i,j,k,bi,bj,iPOChs) * wsi_sink ) +
+     &                       (Ptr(i,j,k,bi,bj,iPOCsp) * wpic_sink) +
+     &                       (Ptr(i,j,k,bi,bj,iPOCss) * wsi_sink ) +
+     &                       (Ptr(i,j,k,bi,bj,iPOCsd) * wc_sink  ) + 
+     &                       (Ptr(i,j,k,bi,bj,iPOChd) * wc_sink  ) +
+     &                       (Ptr(i,j,k,bi,bj,iPOC  ) * wc_sink  ) 
 #endif
 c
 #ifdef ALLOW_MUTANTS
@@ -1627,3 +1915,4 @@ c
 #endif  /*ALLOW_PTRACERS*/
 
 C============================================================================
+

@@ -30,10 +30,11 @@ CEOP
 
 #undef NOTEMP
 #define TEMP_VERSION 2
-#define TEMP_RANGE
+c TEMP_RANGE is turned off below in TWO_SPECIES_SETUP
+c#define TEMP_RANGE
 
-c Number of species. Diazotroph (ALLOW_DIAZ) gets turned off when only two species
-c Diazotrophs convert atmospheric nitrogen to organic nitrate
+c Number of species. Diazotroph (ALLOW_DIAZ) gets turned off when only two species.
+c Diazotrophs convert atmospheric nitrogen to organic nitrate.
 #define TWO_SPECIES_SETUP
 #undef NINE_SPECIES_SETUP
 

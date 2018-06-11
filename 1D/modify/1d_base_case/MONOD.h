@@ -61,6 +61,17 @@ c           have been tried
      &          prochlPsat,
      &          UniDzPsat, UniDzPsatrange, 
      &          depthdenit, o2crit, denit_np,
+     &          M_poc, M_caco3, M_sio3, M_fe,
+     &          omega_pcaco3, omega_psio3, omega_dust,
+     &          lambda_poc, lambda_caco3,
+     &          lambda_sio3, lambda_dust,
+     &          lambda_hard,
+     &          f_pcaco3_hard, f_psio3_hard, 
+     &          Qsi_diat,
+     &          f_dust_bio, f_dust_hard,
+     &          Kpremin_hard, Kdissc_hard,
+     &          zeu, zeuFe,
+     &          Kpremin_DUSTs, Kpremin_DUSTh,
 #ifdef OLD_GRAZE
      &          graze,
      &          kgrazesat,
@@ -158,6 +169,18 @@ c           have been tried
          _RL ksatNH4fac, ksatNO2fac
          _RL sig1,sig2,sig3
          _RL val_ksatsi
+         _RL M_poc, M_caco3, M_sio3, M_fe
+         _RL omega_pcaco3, omega_psio3, omega_dust
+         _RL lambda_poc, lambda_caco3
+         _RL lambda_sio3, lambda_dust
+         _RL lambda_hard
+         _RL f_pcaco3_hard
+         _RL f_psio3_hard 
+         _RL Qsi_diat
+         _RL f_dust_bio, f_dust_hard
+         _RL Kpremin_hard, Kdissc_hard
+         _RL zeu, zeuFe
+         _RL Kpremin_DUSTs, Kpremin_DUSTh
 #ifdef OLD_GRAZE
          _RL graze(npmax,nzmax)
          _RL kgrazesat
@@ -289,14 +312,13 @@ c     &         Smallalphachl, Smallalphachlrange,
 
 #ifdef ALLOW_CARBON
          COMMON/darwin_carbon/ R_OP, wc_sink, wpic_sink,
-     &                 Kdoc, Kpremin_C, Kdissc,
-     &                 luke_zeu
+     &                 Kdoc, Kpremin_C, Kdissc
          _RL R_OP
          _RL wc_sink
          _RL wpic_sink
          _RL Kdoc
          _RL Kpremin_C
          _RL Kdissc
-         _RL luke_zeu
 #endif
+
 
